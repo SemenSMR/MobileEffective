@@ -56,24 +56,17 @@ public class SecurityConfig implements WebMvcConfigurer {
         httpSecurity
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        .anyRequest().authenticated())
-//                        .authorizeHttpRequests(authorizeHttpRequest ->
-//                                authorizeHttpRequest
-//                                        .requestMatchers("/**").permitAll())
-//                )
-                .securityMatcher("/auth/authentication", "/auth/csrf", "/login", "/auth/logout",
-                        "/auth/token/refresh", "/reset-password/", "/v3/api-docs/**", "/swagger-ui/",
-                        "/swagger-ui.html", "/webjars/",
-                        "/webhooks/confluence", "/webhooks/jira/", "/jira-endpoint/", "/confluence-endpoint/",
-                        "/topic/", "/actuator/prometheus", "/oauth2/",
-                        "/oauth/", "/.well-known/", "/css/", "/favicon.svg")
-
-//                .formLogin(form -> form
-//                        .loginPage("/login")
-//                        .defaultSuccessUrl("/swagger-ui.html")
-//                        .permitAll())
+                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/webjars/**",
+                                "/api/auth/register",
+                                "/api/auth/login"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
                 .sessionManagement(sessionManagement -> sessionManagement
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )

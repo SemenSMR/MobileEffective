@@ -85,9 +85,6 @@ public class CommentController {
 
     @DeleteMapping("{commentId}")
     public ResponseEntity<String> deleteComment(@PathVariable Long commentId) {
-        if (commentId == null || commentId <= 0) {
-            throw new InvalidInputException("Недопустимый комментарий ID: " + commentId);
-        }
         commentService.deleteComment(commentId);
         return ResponseEntity.ok("Комментарий с ID " + commentId + " был успешно удален.");
     }

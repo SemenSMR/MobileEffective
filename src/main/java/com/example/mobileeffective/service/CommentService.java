@@ -40,6 +40,9 @@ public class CommentService {
     }
 
     public void deleteComment(Long commentId) {
+        if (commentId == null || commentId <= 0) {
+            throw new InvalidInputException("Недопустимый комментарий ID: " + commentId);
+        }
         if (!commentRepository.existsById(commentId)) {
             throw new ResourceNotFoundException("Комментарий с идентификатором не найден: " + commentId);
         }
