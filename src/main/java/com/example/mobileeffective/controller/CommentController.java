@@ -1,17 +1,10 @@
 package com.example.mobileeffective.controller;
 
+import com.example.mobileeffective.dto.CommentRequest;
 import com.example.mobileeffective.entity.Comment;
-import com.example.mobileeffective.entity.User;
-import com.example.mobileeffective.exception.ErrorResponse;
-import com.example.mobileeffective.exception.InvalidInputException;
 import com.example.mobileeffective.service.CommentService;
-import com.example.mobileeffective.service.TaskService;
-import com.example.mobileeffective.service.UserService;
-//import io.swagger.v3.oas.annotations.Operation;
-//import io.swagger.v3.oas.annotations.media.Content;
-//import io.swagger.v3.oas.annotations.media.Schema;
-//import io.swagger.v3.oas.annotations.responses.ApiResponse;
-//import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,84 +20,45 @@ import org.springframework.web.bind.annotation.*;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class CommentController {
-    TaskService taskService;
-
     CommentService commentService;
 
-    UserService userService;
-
-
+    @SecurityRequirement(name = "JWT")
+    @Operation(summary = "Добавление коментария", description = "Позволяет добавить коментарий к задаче")
     @PostMapping()
-    public ResponseEntity<String> addComment(@PathVariable Long taskId, @RequestBody Comment comment, @RequestHeader("Authorization") String token) {
-        if (taskId == null || taskId <= 0) {
-            throw new InvalidInputException("Неверный идентификатор задачи: " + taskId);
-        }
-        if (comment == null || comment.getText() == null || comment.getText().isEmpty()) {
-            throw new InvalidInputException("Текст комментария не должен быть пустым");
-        }
-        User currentUser = userService.getCurrentUserFromToken(token);
-        comment.setTask(taskService.getTaskById(taskId));
-        comment.setAuthor(currentUser);
-        return ResponseEntity.ok("Комментарий создан успешно");
+    public ResponseEntity<String> addComment(@PathVariable Long taskId, @RequestBody CommentRequest commentRequest, @RequestHeader("Authorization") String token) {
+
+        commentService.saveComment(taskId, commentRequest, token);
+        return ResponseEntity.ok("Comment successfully added ");
     }
-//    @Operation(
-//            summary = "Получить комментарий",
-//            description = "Получить комментарий для задачи",
-//            tags = {"task, get"}
-//    )
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "Книга успешно получена",
-//                    content = @Content(schema = @Schema(implementation = ResponseEntity.class), mediaType = "application/json")),
-//            @ApiResponse(responseCode = "404", description = "Недопустимая задача ID",
-//                    content = @Content(schema = @Schema(implementation = InvalidInputException.class), mediaType = "application/json")),
-//            @ApiResponse(responseCode = "400", description = "ID не прошло валидацию",
-//                    content = @Content(schema = @Schema(implementation = ErrorResponse.class), mediaType = "application/json"))
-//    })
+    @SecurityRequirement(name = "JWT")
+    @Operation(summary = "Получить комментарии", description = "Получаем комментарии по id задачи ")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping
     public ResponseEntity<Page<Comment>> getCommentsForTask(
             @PathVariable Long taskId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        if (taskId == null || taskId <= 0) {
-            throw new InvalidInputException("Недопустимая задача ID: " + taskId);
-        }
+
         Pageable pageable = PageRequest.of(page, size);
         Page<Comment> comments = commentService.getCommentsByTaskId(taskId, pageable);
         return ResponseEntity.ok(comments);
     }
-
+    @SecurityRequirement(name = "JWT")
+    @Operation(summary = "Изменение комментария", description = "Позволяет изменить комментарий по id коментарию")
     @PutMapping("/{commentId}")
     public ResponseEntity<Comment> updateComment(
             @PathVariable Long commentId,
-            @RequestBody Comment updatedComment) {
+            @RequestBody CommentRequest commentRequest) {
 
-        Comment comment = commentService.updateComment(commentId, updatedComment);
+        Comment comment = commentService.updateComment(commentId, commentRequest);
         return ResponseEntity.ok(comment);
     }
-
+    @SecurityRequirement(name = "JWT")
+    @Operation(summary = "Удаление коментария", description = "Позволяет удалить комментарий по id комментария")
     @DeleteMapping("{commentId}")
     public ResponseEntity<String> deleteComment(@PathVariable Long commentId) {
         commentService.deleteComment(commentId);
-        return ResponseEntity.ok("Комментарий с ID " + commentId + " был успешно удален.");
+        return ResponseEntity.ok("Комментарий с ID " + commentId + " successfully deleted");
     }
-//    @Operation(
-//            summary = "Получить книгу",
-//            description = "Получить книгу по ID",
-//            tags = {"book, get"}
-//    )
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "Книга успешно получена",
-//                    content = @Content(schema = @Schema(implementation = ResponseEntity.class), mediaType = "application/json")),
-//            @ApiResponse(responseCode = "404", description = "Книга с таким ID не найдена",
-//                    content = @Content(schema = @Schema(implementation = ErrorResponse.class), mediaType = "application/json")),
-//            @ApiResponse(responseCode = "400", description = "ID не прошло валидацию",
-//                    content = @Content(schema = @Schema(implementation = ErrorResponse.class), mediaType = "application/json"))
-//    })
 
-//    @GetMapping("/{id}")
-//    public GetBookViewDTO getBookViewById(@PathVariable @Parameter(description = "ID книги") @Positive Integer id) throws BookNotFoundException {
-//        log.info("Begin get bookView: id={}", id);
-//        return service.getBookViewById(id);
-//    }
 }

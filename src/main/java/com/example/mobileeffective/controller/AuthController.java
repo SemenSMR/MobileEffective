@@ -2,9 +2,13 @@ package com.example.mobileeffective.controller;
 
 
 import com.example.mobileeffective.config.UserDetailsImpl;
+import com.example.mobileeffective.mappers.UserMapper;
+import com.example.mobileeffective.dto.UserLoginRequest;
+import com.example.mobileeffective.dto.UserRegistrationRequest;
 import com.example.mobileeffective.entity.User;
 import com.example.mobileeffective.service.JwtService;
 import com.example.mobileeffective.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -33,15 +37,19 @@ public class AuthController {
     JwtService jwtService;
 
 
+    @Operation(summary = "Регистрация пользователя", description = "Позволяет Добавить пользователя в бд")
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody User user) {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
+        User user = UserMapper.toEntityRegister(request);
         User savedUser = userService.saveUser(user);
-        return ResponseEntity.ok("Пользователь успешно зарегистрировался: " + savedUser.getEmail());
+        return ResponseEntity.ok("User has successfully registered: " + savedUser.getEmail());
     }
 
+    @Operation(summary = "Авторизация", description = "Позволяет получить токен для дальнейших методов")
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody User user) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword()));
+    public ResponseEntity<?> loginUser(@RequestBody UserLoginRequest request) {
+        User user = UserMapper.toEntityLogin(request);
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         UserDetails userDetails = userService.loadUserByUsername(user.getEmail());
         String token = jwtService.generateToken((UserDetailsImpl) userDetails);
         return ResponseEntity.ok(token);

@@ -1,6 +1,7 @@
 package com.example.mobileeffective.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -41,5 +42,15 @@ public class Task {
     @OneToMany(mappedBy = "task")
     private List<Comment> comments;
 
+    @JsonProperty("author")
+    public Long getAuthorId() {
+        return author != null ? author.getId() : null;
+    }
 
+    @JsonProperty("assignee")
+    public Long getAssigneeId() {
+        return assignee != null ? assignee.getId() : null;
+    }
 }
+
+

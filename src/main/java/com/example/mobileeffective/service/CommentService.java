@@ -1,31 +1,54 @@
 package com.example.mobileeffective.service;
 
+import com.example.mobileeffective.dto.CommentRequest;
 import com.example.mobileeffective.entity.Comment;
+import com.example.mobileeffective.entity.Task;
+import com.example.mobileeffective.entity.User;
 import com.example.mobileeffective.exception.InvalidInputException;
 import com.example.mobileeffective.exception.ResourceNotFoundException;
 import com.example.mobileeffective.repository.CommentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Service
 public class CommentService {
-    @Autowired
-    private CommentRepository commentRepository;
 
-    public Comment saveComment(Comment comment) {
-        if (comment == null || comment.getTask() == null || comment.getAuthor() == null) {
-            throw new InvalidInputException("Комментарий, задача и автор не должны быть пустыми");
+    private CommentRepository commentRepository;
+    private TaskService taskService;
+    private UserService userService;
+
+    public void saveComment(Long taskId, CommentRequest commentRequest, String token) {
+
+        User currentUser = userService.getCurrentUserFromToken(token);
+        Task task = taskService.getTaskById(taskId);
+
+
+        Comment comment = new Comment();
+        comment.setText(commentRequest.getText());
+        comment.setTask(task);
+        comment.setAuthor(currentUser);
+
+
+        if (comment.getText() == null || comment.getText().isEmpty()) {
+            throw new InvalidInputException("Текст комментария не должен быть пустым");
         }
-        return commentRepository.save(comment);
+
+        commentRepository.save(comment);
+
     }
 
     public Page<Comment> getCommentsByTaskId(Long taskId, Pageable pageable) {
         if (taskId == null || taskId <= 0) {
-            throw new InvalidInputException("Недопустимая задача ID: " + taskId);
+            throw new InvalidInputException("Недопустимый идентификатор задачи: " + taskId);
         }
-        return commentRepository.findByTaskId(taskId, pageable);
+
+        return commentRepository.findByTask_Id(taskId, pageable);
     }
 
     public Comment getCommentById(Long commentId) {
@@ -33,9 +56,9 @@ public class CommentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Комментарий не найден"));
     }
 
-    public Comment updateComment(Long commentId, Comment updatedComment) {
+    public Comment updateComment(Long commentId, CommentRequest commentRequest) {
         Comment existingComment = getCommentById(commentId);
-        existingComment.setText(updatedComment.getText());
+        existingComment.setText(commentRequest.getText());
         return commentRepository.save(existingComment);
     }
 
